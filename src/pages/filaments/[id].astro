@@ -1,0 +1,50 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import FilamentForm from '../../components/FilamentForm.tsx';
+import { getInventoryItem } from '../../lib/server/repository';
+
+const { id } = Astro.params;
+const item = await getInventoryItem(Astro.locals.supabase, id!);
+
+if (!item) {
+  return Astro.redirect('/filaments?error=' + encodeURIComponent('Filament not found.'));
+}
+
+const str = (value: number | null) => (value === null ? '' : String(value));
+
+const initial = {
+  name: item.name,
+  manufacturer: item.manufacturer,
+  material: item.material,
+  color: item.color ?? '',
+  initial_quantity_g: String(item.initial_quantity_g),
+  nozzle_temp_c: str(item.nozzle_temp_c),
+  bed_temp_c: str(item.bed_temp_c),
+  print_speed_mms: str(item.print_speed_mms),
+  flow_rate_pct: str(item.flow_rate_pct),
+  cooling_pct: str(item.cooling_pct),
+  notes: item.notes ?? '',
+};
+---
+
+<Layout
+  title={`Edit ${item.name}`}
+  subtitle={`${item.deducted_quantity_g} g already consumed by printed projects · ${item.available_quantity_g} g available`}
+>
+  {item.deducted_quantity_g > 0 && (
+    <p class="mb-5 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+      Lowering the total quantity below {item.deducted_quantity_g} g would contradict what
+      printed projects already consumed. The edit is allowed — it's your spool — but
+      double-check the number.
+    </p>
+  )}
+
+  <div class="card p-6">
+    <FilamentForm
+      client:load
+      action={`/api/filaments/${item.id}`}
+      initial={initial}
+      submitLabel="Save changes"
+    />
+  </div>
+</Layout>

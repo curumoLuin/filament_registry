@@ -1,0 +1,13 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import FilamentForm from '../../components/FilamentForm.tsx';
+---
+
+<Layout
+  title="Add filament"
+  subtitle="Paste a datasheet to fill the parameters automatically, or type them in yourself."
+>
+  <div class="card p-6">
+    <FilamentForm client:load action="/api/filaments" />
+  </div>
+</Layout>

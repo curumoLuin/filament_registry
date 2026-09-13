@@ -1,0 +1,88 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  subtitle?: string;
+}
+
+const { title, subtitle } = Astro.props;
+const user = Astro.locals.user;
+const path = Astro.url.pathname;
+const ok = Astro.url.searchParams.get('ok');
+const error = Astro.url.searchParams.get('error');
+
+const navItems = [
+  { href: '/filaments', label: 'Inventory' },
+  { href: '/projects', label: 'Projects' },
+];
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} · Filament Registry</title>
+  </head>
+  <body class="min-h-screen">
+    {user && (
+      <header class="border-b border-stone-200 bg-white">
+        <div class="mx-auto flex max-w-5xl items-center gap-6 px-6 py-3">
+          <a href="/filaments" class="flex items-center gap-2 font-semibold tracking-tight">
+            <span class="inline-block h-3 w-3 rounded-full bg-[var(--color-accent)]"></span>
+            Filament Registry
+          </a>
+          <nav class="flex gap-1 text-sm">
+            {navItems.map((item) => (
+              <a
+                href={item.href}
+                class:list={[
+                  'rounded-md px-3 py-1.5',
+                  path.startsWith(item.href)
+                    ? 'bg-stone-900 text-white'
+                    : 'text-stone-600 hover:bg-stone-100',
+                ]}
+              >
+                {item.label}
+              </a>
+            ))}
+          </nav>
+          <div class="ml-auto flex items-center gap-3 text-sm text-stone-500">
+            <span data-testid="current-user">{user.email}</span>
+            <form method="POST" action="/api/auth/logout">
+              <button class="text-stone-600 underline underline-offset-2 hover:text-stone-900">
+                Sign out
+              </button>
+            </form>
+          </div>
+        </div>
+      </header>
+    )}
+
+    <main class="mx-auto max-w-5xl px-6 py-8">
+      <div class="mb-6">
+        <h1 class="text-2xl font-semibold tracking-tight">{title}</h1>
+        {subtitle && <p class="mt-1 text-sm text-stone-500">{subtitle}</p>}
+      </div>
+
+      {ok && (
+        <p
+          data-testid="flash-ok"
+          class="mb-5 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900"
+        >
+          {ok}
+        </p>
+      )}
+      {error && (
+        <p
+          data-testid="flash-error"
+          class="mb-5 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900"
+        >
+          {error}
+        </p>
+      )}
+
+      <slot />
+    </main>
+  </body>
+</html>

@@ -1,0 +1,183 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getProject, listInventory, toLine, toParameters, toStock } from '../../lib/server/repository';
+import { aggregateParameters, PARAMETER_LABELS, PARAMETER_UNITS, type ParameterKey } from '../../lib/domain/parameters';
+import { availableQuantityG, validateUsage } from '../../lib/domain/inventory';
+
+const { id } = Astro.params;
+const supabase = Astro.locals.supabase;
+const project = await getProject(supabase, id!);
+
+if (!project) {
+  return Astro.redirect('/projects?error=' + encodeURIComponent('Project not found.'));
+}
+
+const inventory = await listInventory(supabase);
+const stocks = inventory.map(toStock);
+const lines = project.lines.map(toLine);
+
+// What would happen if the user hit "Mark printed" right now.
+const readiness =
+  project.status === 'printed'
+    ? { ok: true, violations: [] }
+    : validateUsage(lines, stocks);
+
+const { blocks, conflicts } = aggregateParameters(
+  project.lines.map((line) => ({
+    filamentId: line.filament_id,
+    filamentName: line.filament?.name ?? line.filament_name_snapshot,
+    parameters: toParameters(line.filament),
+  })),
+);
+
+const parameterKeys = Object.keys(PARAMETER_LABELS) as ParameterKey[];
+const stockById = new Map(stocks.map((s) => [s.id, s]));
+const totalDeclared = lines.reduce((sum, line) => sum + line.estimatedUsageG, 0);
+---
+
+<Layout
+  title={project.name}
+  subtitle={project.description ?? `${Math.round(totalDeclared * 1000) / 1000} g declared across ${lines.length} filament${lines.length === 1 ? '' : 's'}`}
+>
+  <div class="mb-6 flex flex-wrap items-center gap-3">
+    <span
+      class:list={[
+        'badge',
+        project.status === 'printed'
+          ? 'bg-emerald-100 text-emerald-800'
+          : 'bg-stone-100 text-stone-700',
+      ]}
+      data-testid="project-status"
+    >
+      {project.status === 'printed' ? 'Printed' : 'Draft'}
+    </span>
+
+    {project.status === 'draft' ? (
+      <form method="POST" action={`/api/projects/${project.id}/status`}>
+        <input type="hidden" name="status" value="printed" />
+        <button
+          class="btn-primary"
+          data-testid="mark-printed"
+          disabled={!readiness.ok}
+          title={readiness.ok ? undefined : 'Not enough filament available'}
+        >
+          Mark as printed
+        </button>
+      </form>
+    ) : (
+      <form method="POST" action={`/api/projects/${project.id}/status`}>
+        <input type="hidden" name="status" value="draft" />
+        <button class="btn-secondary" data-testid="mark-draft">
+          Move back to draft
+        </button>
+      </form>
+    )}
+
+    <form
+      method="POST"
+      action={`/api/projects/${project.id}`}
+      class="ml-auto"
+    >
+      <input type="hidden" name="_action" value="delete" />
+      <button class="btn-danger" data-testid="delete-project">Delete project</button>
+    </form>
+  </div>
+
+  {!readiness.ok && (
+    <ul
+      data-testid="readiness-warning"
+      class="mb-6 space-y-1 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+    >
+      <li class="font-medium">This project cannot be printed yet:</li>
+      {readiness.violations.map((violation) => <li>· {violation.message}</li>)}
+    </ul>
+  )}
+
+  <section class="card mb-6 overflow-hidden">
+    <h2 class="border-b border-stone-100 px-4 py-3 text-sm font-semibold">Filament usage</h2>
+    <table class="w-full text-sm">
+      <thead class="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-500">
+        <tr>
+          <th class="px-4 py-2 font-semibold">Filament</th>
+          <th class="px-4 py-2 text-right font-semibold">Declared usage</th>
+          <th class="px-4 py-2 text-right font-semibold">
+            {project.status === 'printed' ? 'Remaining after print' : 'Available now'}
+          </th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-stone-100">
+        {project.lines.map((line) => {
+          const stock = line.filament_id ? stockById.get(line.filament_id) : undefined;
+          return (
+            <tr data-testid="usage-row">
+              <td class="px-4 py-3">
+                {line.filament ? (
+                  <a href={`/filaments/${line.filament.id}`} class="font-medium underline-offset-2 hover:underline">
+                    {line.filament.name}
+                  </a>
+                ) : (
+                  <span class="font-medium text-stone-500" data-testid="filament-deleted">
+                    {line.filament_name_snapshot} <span class="text-xs">(filament deleted)</span>
+                  </span>
+                )}
+              </td>
+              <td class="px-4 py-3 text-right tabular-nums" data-testid="declared-usage">
+                {Number(line.estimated_usage_g)} g
+              </td>
+              <td class="px-4 py-3 text-right tabular-nums" data-testid="remaining-quantity">
+                {stock ? `${availableQuantityG(stock)} g` : '—'}
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card overflow-hidden">
+    <h2 class="border-b border-stone-100 px-4 py-3 text-sm font-semibold">Print parameters</h2>
+
+    {conflicts.length > 0 && (
+      <div
+        data-testid="parameter-conflicts"
+        class="border-b border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+      >
+        <p class="font-medium">
+          These filaments disagree — use the per-filament values below, not one setting for
+          the whole print:
+        </p>
+        <ul class="mt-1 space-y-0.5 text-xs">
+          {conflicts.map((conflict) => (
+            <li>
+              <strong>{conflict.label}</strong>: {conflict.values
+                .map((v) => `${v.filamentName} ${v.value}${conflict.unit}`)
+                .join(' vs ')} (spread {conflict.spread}{conflict.unit})
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
+
+    <div class="grid gap-4 p-4 sm:grid-cols-2">
+      {blocks.map((block) => (
+        <div class="rounded-md border border-stone-200 p-4" data-testid="parameter-block">
+          <h3 class="text-sm font-medium">{block.filamentName}</h3>
+          <dl class="mt-3 space-y-1.5 text-sm">
+            {parameterKeys.map((key) => (
+              <div class="flex justify-between gap-4">
+                <dt class="text-stone-500">{PARAMETER_LABELS[key]}</dt>
+                <dd class="tabular-nums">
+                  {block.parameters[key] === null ? (
+                    <span class="text-stone-400">not set</span>
+                  ) : (
+                    `${block.parameters[key]} ${PARAMETER_UNITS[key]}`
+                  )}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      ))}
+    </div>
+  </section>
+</Layout>

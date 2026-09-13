@@ -1,0 +1,24 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import ProjectForm from '../../components/ProjectForm.tsx';
+import { listInventory } from '../../lib/server/repository';
+
+const inventory = (await listInventory(Astro.locals.supabase)).map((item) => ({
+  id: item.id,
+  name: item.name,
+  manufacturer: item.manufacturer,
+  material: item.material,
+  initialQuantityG: item.initial_quantity_g,
+  deductedQuantityG: item.deducted_quantity_g,
+  availableQuantityG: item.available_quantity_g,
+}));
+---
+
+<Layout
+  title="New project"
+  subtitle="Available quantity is shown as you pick each spool, before the project is created."
+>
+  <div class="card p-6">
+    <ProjectForm client:load inventory={inventory} />
+  </div>
+</Layout>

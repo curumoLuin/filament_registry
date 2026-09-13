@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #12100e;
+  --color-paper: #faf8f5;
+  --color-accent: #b4541f;
+}
+
+html { color-scheme: light; }
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+@layer components {
+  .card {
+    @apply rounded-lg border border-stone-200 bg-white shadow-sm;
+  }
+  .label {
+    @apply block text-xs font-semibold uppercase tracking-wide text-stone-500;
+  }
+  .input {
+    @apply mt-1 w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm
+           outline-none focus:border-stone-500 focus:ring-2 focus:ring-stone-200;
+  }
+  .btn,
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-3.5 py-2
+           text-sm font-medium transition-colors;
+  }
+  .btn-primary {
+    @apply bg-stone-900 text-white hover:bg-stone-700;
+  }
+  .btn-secondary {
+    @apply border border-stone-300 bg-white text-stone-800 hover:bg-stone-50;
+  }
+  .btn-danger {
+    @apply border border-red-200 bg-white text-red-700 hover:bg-red-50;
+  }
+  .btn:disabled,
+  .btn-primary:disabled,
+  .btn-secondary:disabled,
+  .btn-danger:disabled {
+    @apply cursor-not-allowed opacity-50;
+  }
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+}

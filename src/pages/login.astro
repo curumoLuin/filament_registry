@@ -1,0 +1,62 @@
+---
+import '../styles/global.css';
+
+const error = Astro.url.searchParams.get('error');
+const redirectTo = Astro.url.searchParams.get('redirectTo') ?? '/filaments';
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sign in · Filament Registry</title>
+  </head>
+  <body class="grid min-h-screen place-items-center px-6">
+    <div class="w-full max-w-sm">
+      <div class="mb-6 flex items-center gap-2">
+        <span class="inline-block h-3 w-3 rounded-full bg-[var(--color-accent)]"></span>
+        <span class="font-semibold tracking-tight">Filament Registry</span>
+      </div>
+
+      <div class="card p-6">
+        <h1 class="text-lg font-semibold">Sign in</h1>
+        <p class="mt-1 text-sm text-stone-500">
+          Your spools and projects are private to your account.
+        </p>
+
+        {error && (
+          <p
+            data-testid="login-error"
+            class="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900"
+          >
+            {error}
+          </p>
+        )}
+
+        <form method="POST" action="/api/auth/login" class="mt-5 space-y-4">
+          <input type="hidden" name="redirectTo" value={redirectTo} />
+          <div>
+            <label class="label" for="email">Email</label>
+            <input class="input" id="email" name="email" type="email" required autocomplete="username" />
+          </div>
+          <div>
+            <label class="label" for="password">Password</label>
+            <input
+              class="input"
+              id="password"
+              name="password"
+              type="password"
+              required
+              autocomplete="current-password"
+            />
+          </div>
+          <button class="btn-primary w-full" type="submit">Sign in</button>
+        </form>
+      </div>
+
+      <p class="mt-4 text-center text-xs text-stone-400">
+        Accounts are created by the owner in Supabase — there is no public sign-up.
+      </p>
+    </div>
+  </body>
+</html>

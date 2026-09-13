@@ -1,0 +1,84 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { listInventory } from '../../lib/server/repository';
+
+const inventory = await listInventory(Astro.locals.supabase);
+const totalAvailable = inventory.reduce((sum, item) => sum + item.available_quantity_g, 0);
+---
+
+<Layout
+  title="Inventory"
+  subtitle={`${inventory.length} spool${inventory.length === 1 ? '' : 's'} · ${Math.round(totalAvailable)} g available in total`}
+>
+  <div class="mb-5 flex justify-end">
+    <a href="/filaments/new" class="btn-primary" data-testid="add-filament-link">
+      Add filament
+    </a>
+  </div>
+
+  {inventory.length === 0 ? (
+    <div class="card p-8 text-center" data-testid="inventory-empty">
+      <p class="font-medium">No spools yet.</p>
+      <p class="mx-auto mt-1 max-w-md text-sm text-stone-500">
+        Add your first filament — paste the manufacturer's datasheet and the print
+        parameters are filled in for you.
+      </p>
+      <a href="/filaments/new" class="btn-primary mt-5">Add filament</a>
+    </div>
+  ) : (
+    <div class="card overflow-hidden">
+      <table class="w-full text-sm" data-testid="inventory-table">
+        <thead class="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-500">
+          <tr>
+            <th class="px-4 py-3 font-semibold">Filament</th>
+            <th class="px-4 py-3 font-semibold">Material</th>
+            <th class="px-4 py-3 font-semibold">Parameters</th>
+            <th class="px-4 py-3 text-right font-semibold">Available</th>
+            <th class="px-4 py-3"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-stone-100">
+          {inventory.map((item) => (
+            <tr data-testid="inventory-row" data-filament-id={item.id}>
+              <td class="px-4 py-3">
+                <div class="font-medium">{item.name}</div>
+                <div class="text-xs text-stone-500">
+                  {item.manufacturer}{item.color ? ` · ${item.color}` : ''}
+                </div>
+              </td>
+              <td class="px-4 py-3 text-stone-600">{item.material}</td>
+              <td class="px-4 py-3 text-xs text-stone-600">
+                {[
+                  item.nozzle_temp_c !== null ? `${item.nozzle_temp_c}°C nozzle` : null,
+                  item.bed_temp_c !== null ? `${item.bed_temp_c}°C bed` : null,
+                  item.print_speed_mms !== null ? `${item.print_speed_mms} mm/s` : null,
+                ].filter(Boolean).join(' · ') || <span class="text-stone-400">not set</span>}
+              </td>
+              <td class="px-4 py-3 text-right">
+                <div class="font-semibold tabular-nums" data-testid="available-quantity">
+                  {item.available_quantity_g} g
+                </div>
+                {item.deducted_quantity_g > 0 && (
+                  <div class="text-xs text-stone-500 tabular-nums">
+                    of {item.initial_quantity_g} g
+                  </div>
+                )}
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex justify-end gap-2">
+                  <a href={`/filaments/${item.id}`} class="btn-secondary py-1 text-xs">Edit</a>
+                  <form method="POST" action={`/api/filaments/${item.id}`}>
+                    <input type="hidden" name="_action" value="delete" />
+                    <button class="btn-danger py-1 text-xs" data-testid="delete-filament">
+                      Delete
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+</Layout>

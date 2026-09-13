@@ -1,0 +1,65 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { listProjects } from '../../lib/server/repository';
+
+const projects = await listProjects(Astro.locals.supabase);
+---
+
+<Layout
+  title="Projects"
+  subtitle={`${projects.length} project${projects.length === 1 ? '' : 's'}`}
+>
+  <div class="mb-5 flex justify-end">
+    <a href="/projects/new" class="btn-primary" data-testid="add-project-link">New project</a>
+  </div>
+
+  {projects.length === 0 ? (
+    <div class="card p-8 text-center" data-testid="projects-empty">
+      <p class="font-medium">No projects yet.</p>
+      <p class="mx-auto mt-1 max-w-md text-sm text-stone-500">
+        A project declares which spools a print will use and how much of each. Marking it
+        printed deducts exactly those amounts.
+      </p>
+      <a href="/projects/new" class="btn-primary mt-5">New project</a>
+    </div>
+  ) : (
+    <ul class="space-y-3" data-testid="project-list">
+      {projects.map((project) => {
+        const total = project.lines.reduce(
+          (sum, line) => sum + Number(line.estimated_usage_g),
+          0,
+        );
+        return (
+          <li class="card p-4" data-testid="project-row">
+            <div class="flex flex-wrap items-start gap-4">
+              <div class="min-w-0 flex-1">
+                <a
+                  href={`/projects/${project.id}`}
+                  class="font-medium underline-offset-2 hover:underline"
+                >
+                  {project.name}
+                </a>
+                <div class="mt-1 text-xs text-stone-500">
+                  {project.lines.length} filament{project.lines.length === 1 ? '' : 's'} ·{' '}
+                  {Math.round(total * 1000) / 1000} g declared
+                </div>
+              </div>
+              <span
+                class:list={[
+                  'badge',
+                  project.status === 'printed'
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : 'bg-stone-100 text-stone-700',
+                ]}
+                data-testid="project-status"
+              >
+                {project.status === 'printed' ? 'Printed' : 'Draft'}
+              </span>
+              <a href={`/projects/${project.id}`} class="btn-secondary py-1 text-xs">Open</a>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  )}
+</Layout>
