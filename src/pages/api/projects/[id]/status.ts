@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { statusSchema } from '../../../../lib/schemas';
 import { applyStatusChange } from '../../../../lib/domain/inventory';
 import { getProject, listInventory, toLine, toStock } from '../../../../lib/server/repository';
+import { humanise } from '../../../../lib/server/db-errors';
 
 export const prerender = false;
 
@@ -60,16 +61,3 @@ export const POST: APIRoute = async ({ request, params, locals, redirect }) => {
 
   return redirect(`/projects/${id}?ok=${encodeURIComponent(message)}`);
 };
-
-function humanise(message: string): string {
-  if (message.includes('INSUFFICIENT_QUANTITY')) {
-    return message.replace(/^.*INSUFFICIENT_QUANTITY:\s*/, 'Not enough filament: ');
-  }
-  if (message.includes('FILAMENT_MISSING')) {
-    return message.replace(/^.*FILAMENT_MISSING:\s*/, 'Filament no longer in inventory: ');
-  }
-  if (message.includes('NO_LINES')) {
-    return 'This project has no filament lines.';
-  }
-  return message;
-}

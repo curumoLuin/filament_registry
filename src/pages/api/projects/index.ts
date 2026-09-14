@@ -2,11 +2,11 @@ import type { APIRoute } from 'astro';
 import { projectInputSchema, flattenIssues } from '../../../lib/schemas';
 import { validateUsage, type ProjectLine } from '../../../lib/domain/inventory';
 import { listInventory, toStock } from '../../../lib/server/repository';
+import { humanise } from '../../../lib/server/db-errors';
 
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request, locals, redirect }) => {
-  const user = locals.user!;
   const supabase = locals.supabase;
   const form = await request.formData();
 
@@ -42,37 +42,25 @@ export const POST: APIRoute = async ({ request, locals, redirect }) => {
     return fail(redirect, validation.violations.map((v) => v.message).join(' · '));
   }
 
-  const { data: project, error: projectError } = await supabase
-    .from('projects')
-    .insert({
-      user_id: user.id,
-      name: parsed.data.name,
-      description: parsed.data.description,
-      status: 'draft',
-    })
-    .select('id')
-    .single();
-
-  if (projectError || !project) {
-    return fail(redirect, projectError?.message ?? 'Could not create the project.');
-  }
-
-  const { error: linesError } = await supabase.from('project_filaments').insert(
-    lines.map((line) => ({
-      project_id: project.id,
+  // Jedno wywołanie, jedna transakcja. Wcześniej były tu dwa niezależne
+  // zapytania i kompensujący delete na wypadek, gdyby drugie zawiodło —
+  // czyli gwarancja spójności zależała od tego, czy kod sprzątający zdążył
+  // się wykonać. Teraz wynika ona z transakcji bazy danych (R-10).
+  const { data: projectId, error } = await supabase.rpc('create_project_with_lines', {
+    p_name: parsed.data.name,
+    p_description: parsed.data.description ?? '',
+    p_lines: lines.map((line) => ({
       filament_id: line.filamentId,
       filament_name_snapshot: line.filamentNameSnapshot,
       estimated_usage_g: line.estimatedUsageG,
     })),
-  );
+  });
 
-  if (linesError) {
-    // Don't leave a project with no lines behind.
-    await supabase.from('projects').delete().eq('id', project.id);
-    return fail(redirect, linesError.message);
+  if (error || !projectId) {
+    return fail(redirect, humanise(error?.message ?? 'Could not create the project.'));
   }
 
-  return redirect(`/projects/${project.id}?ok=${encodeURIComponent('Project created as a draft.')}`);
+  return redirect(`/projects/${projectId}?ok=${encodeURIComponent('Project created as a draft.')}`);
 };
 
 function fail(redirect: (path: string) => Response, message: string): Response {
