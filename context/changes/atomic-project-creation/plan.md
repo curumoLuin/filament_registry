@@ -163,7 +163,7 @@ Wycofanie to `drop function`. Bezpieczna do wykonania na żywej bazie.
 
 #### Automated
 
-- [ ] 1.1 Napisz migrację 0002 z funkcją create_project_with_lines
+- [x] 1.1 Napisz migrację 0002 z funkcją create_project_with_lines — 8add51c
 
 #### Manual
 

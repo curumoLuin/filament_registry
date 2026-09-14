@@ -35,6 +35,7 @@ wygodowe są świadomie poza zakresem pokrycia automatycznego w MVP.
 | R-07 | Użytkownik może odczytać albo zmienić filamenty i projekty innego konta | Sekcja kontroli dostępu: jeden właściciel, wszystkie dane należą do tego konta | Wyciek danych między kontami. | Niskie | Wysoki | **P1** |
 | R-08 | Sesja zostaje utracona albo nieuwierzytelnione żądania docierają do tras z danymi | PRD FR-001; pytanie o nadużycie — co się stanie, jeśli nikt się nie zaloguje? | Anonimowy dostęp do rejestru. | Niskie | Wysoki | **P1** |
 | R-09 | Parametr `redirectTo` na ekranie logowania wyprowadza użytkownika na obcą domenę po udanym uwierzytelnieniu | Przegląd implementacji (`/10x-impl-review`, wymiar Safety & Quality) | Ofiara ląduje na stronie atakującego dokładnie w chwili, w której właśnie zaufała ekranowi logowania — to najlepszy możliwy moment na phishing. Sprawdzenie `startsWith('/')` przepuszcza `//evil.example`, bo przeglądarka czyta to jako adres protokołowo-względny. | Niskie | Wysoki | **P1** |
+| R-10 | Tworzenie projektu zostawia w bazie projekt bez ani jednej pozycji | Przegląd implementacji (`/10x-impl-review`, finding F2) | Trasa zapisywała projekt i jego pozycje dwoma niezależnymi zapytaniami, a po nieudanym drugim sprzątała kompensacja napisana w kodzie aplikacji. Wystarczyło, że proces zginął pomiędzy nimi, aby na liście został projekt, którego nie da się wydrukować ani wytłumaczyć. Szkoda jest kosmetyczna, nie księgowa — bilans filamentu pozostaje poprawny, bo szkic niczego nie rezerwuje. | Niskie | Niski | **P2** |
 
 ## Mapa pokrycia
 
@@ -49,6 +50,7 @@ wygodowe są świadomie poza zakresem pokrycia automatycznego w MVP.
 | R-07 | Polityki row-level security w Postgresie zawężone do `auth.uid()` | `supabase/migrations/0001_init.sql` | polityka bazy |
 | R-08 | `redirects an anonymous visitor to the login page`, pełny 8-krokowy przepływ pierwszej sesji | `tests/e2e/first-session.spec.ts` | end-to-end |
 | R-09 | `odrzuca adres protokołowo-względny`, `odrzuca wariant z odwrotnym ukośnikiem`, `odrzuca znaki sterujące…` | `tests/unit/safe-redirect.test.ts` | jednostkowy |
+| R-10 | `create_project_with_lines` — jedna transakcja na projekt i wszystkie jego pozycje | `supabase/migrations/0002_atomic_project_creation.sql` | polityka bazy |
 
 ## Poziomy testów i uzasadnienie
 
@@ -58,9 +60,10 @@ wygodowe są świadomie poza zakresem pokrycia automatycznego w MVP.
 - **End-to-end (Playwright)** — jeden scenariusz: 8-krokowy przepływ pierwszej
   sesji z kryteriów sukcesu PRD, plus strażnik dostępu anonimowego. Dowodzi, że
   elementy są spięte; nie tu pokrywa się przypadki brzegowe.
-- **Polityka bazy** — R-07 jest egzekwowane przez RLS, a nie przez kod
-  aplikacji, więc kontrolą jest definicja polityki. Zweryfikowane ręcznie na
-  drugim koncie.
+- **Polityka bazy** — R-07 jest egzekwowane przez RLS, a R-10 przez transakcję
+  funkcji plpgsql: w obu przypadkach gwarancja leży w bazie, a nie w kodzie
+  aplikacji, więc kontrolą jest definicja polityki albo funkcji. Zweryfikowane
+  ręcznie — R-07 na drugim koncie, R-10 przy tworzeniu projektu.
 
 ## Bramki jakości
 

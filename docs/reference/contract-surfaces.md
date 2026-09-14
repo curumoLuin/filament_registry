@@ -24,10 +24,16 @@
 - **Właściciele / konsumenci**: Wołana po nazwie przez `supabase.rpc()` w `src/pages/api/projects/[id]/status.ts`. Nie istnieje żadna inna ścieżka zapisu do `projects.status`.
 - **Checklista breaking change**: Ta funkcja jest instancją rozstrzygającą dla FR-013/FR-014 — sprawdzenie w TypeScripcie, które biegnie wcześniej, służy komunikatom, nie egzekwowaniu. Nigdy nie omijaj jej bezpośrednim `update`, bo tracisz blokadę wiersza i atomowość. Zmiana nazwy albo sygnatury psuje trasę dopiero w runtime. Prefiksy zgłaszanych przez nią błędów same są kontraktem (niżej).
 
+## create_project_with_lines
+
+- **Kanoniczna definicja**: `supabase/migrations/0002_atomic_project_creation.sql` — `public.create_project_with_lines(p_name text, p_description text, p_lines jsonb) returns uuid`, `security invoker`, plpgsql. Ustala właściciela z `auth.uid()`, wstawia projekt i rozwija `p_lines` do `project_filaments` w jednej transakcji.
+- **Właściciele / konsumenci**: Wołana po nazwie przez `supabase.rpc()` w `src/pages/api/projects/index.ts`. Nie istnieje żadna inna ścieżka tworzenia projektu.
+- **Checklista breaking change**: Klucze obiektów w `p_lines` (`filament_id`, `filament_name_snapshot`, `estimated_usage_g`) muszą zgadzać się co do znaku z listą kolumn w `jsonb_to_recordset` — rozjazd nazw nie jest błędem, tylko cichym `NULL`. Nigdy nie wracaj do dwóch osobnych insertów z kompensacją w kodzie: niepodzielność ma wynikać z transakcji, a nie z tego, czy kod sprzątający zdążył się wykonać (R-10). Funkcja zgłasza `NO_LINES` — ten sam prefiks co `set_project_status`.
+
 ## INSUFFICIENT_QUANTITY / FILAMENT_MISSING / NO_LINES (prefiksy błędów RPC)
 
-- **Kanoniczna definicja**: `supabase/migrations/0001_init.sql` — `INSUFFICIENT_QUANTITY: …`, `FILAMENT_MISSING: …`, `NO_LINES`, `INVALID_STATUS: …`, `PROJECT_NOT_FOUND`.
-- **Właściciele / konsumenci**: `humanise()` w `src/pages/api/projects/[id]/status.ts` dopasowuje je po stringu, żeby wygenerować tekst dla użytkownika.
+- **Kanoniczna definicja**: `supabase/migrations/0001_init.sql` — `INSUFFICIENT_QUANTITY: …`, `FILAMENT_MISSING: …`, `NO_LINES`, `INVALID_STATUS: …`, `PROJECT_NOT_FOUND`; `supabase/migrations/0002_atomic_project_creation.sql` — `NO_LINES`, `NOT_AUTHENTICATED`.
+- **Właściciele / konsumenci**: `humanise()` w `src/lib/server/db-errors.ts` dopasowuje je po stringu, żeby wygenerować tekst dla użytkownika; wołają go obie trasy zapisu (`projects/index.ts`, `projects/[id]/status.ts`).
 - **Checklista breaking change**: Przeredagowanie komunikatu w Postgresie sprawia, że użytkownik widzi surowy błąd bazy. Zmieniaj oba miejsca razem albo przejdź na dopasowanie po `errcode` zamiast po treści.
 
 ## ViolationCode

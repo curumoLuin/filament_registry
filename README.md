@@ -89,7 +89,9 @@ npm install
 ### 2. Utworzenie projektu Supabase
 
 1. Załóż projekt na [supabase.com](https://supabase.com).
-2. **SQL Editor** → wklej całą zawartość `supabase/migrations/0001_init.sql` → Run.
+2. **SQL Editor** → wklej całą zawartość `supabase/migrations/0001_init.sql` → Run,
+   a następnie `supabase/migrations/0002_atomic_project_creation.sql` → Run.
+   Kolejność ma znaczenie: `0002` zakłada tabele utworzone przez `0001`.
 3. **Authentication → Users → Add user** → swój e-mail i hasło, z włączonym
    *Auto Confirm User*. Nie ma publicznej rejestracji: to z założenia narzędzie
    dla jednego właściciela (PRD FR-001).
