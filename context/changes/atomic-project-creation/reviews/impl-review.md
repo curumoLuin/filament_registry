@@ -5,8 +5,8 @@
 - **Zakres**: fazy 1–3 (kroki automatyczne; 1.2 i 2.3 pozostają ręczne)
 - **Data**: 2026-09-14
 - **Werdykt**: NEEDS ATTENTION
-- **Znaleziska**: 0 krytycznych · 5 ostrzeżeń · 6 obserwacji
-- **Stan**: 7 naprawione · 2 odłożone · 2 przyjęte bez działania
+- **Znaleziska**: 0 krytycznych · 6 ostrzeżeń · 6 obserwacji
+- **Stan**: 8 naprawionych · 2 odłożone · 2 przyjęte bez działania
 
 ## Werdykty
 
@@ -99,7 +99,8 @@ jako „potwierdzone" zostały faktycznie wywołane, a nie wywnioskowane.
   `plan.md:60` sugerują zawężenie, którego tam nie ma. `set_project_status` ma
   ten sam kształt — to samo należałoby zrobić w osobnej zmianie.
 - **Fix**: `revoke execute … from public;` przed `grant`.
-- **Decision**: FIXED — commit w tej gałęzi
+- **Decision**: FIXED — commit w tej gałęzi, poprawiony po wykonaniu migracji
+  na prawdziwej instancji (patrz F11)
 
 ### F5 — surowy komunikat Postgresa trafia na ekran użytkownika
 
@@ -215,3 +216,30 @@ kontrolnych zdanych.
   filamentów, które dziś oddają surowy `error.message`. Osobna zmiana.
 - **`set_project_status` ma ten sam nadmiarowy `grant`** co `create_project_with_lines`
   przed poprawką F4. Nie ruszane, bo leży poza zakresem tej zmiany.
+
+### F11 — `revoke … from public` nie wystarcza na Supabase
+
+- **Severity**: ⚠️ WARNING
+- **Impact**: 🏃 LOW — decyzja szybka, poprawka oczywista
+- **Dimension**: Safety & Quality
+- **Location**: `supabase/migrations/0002_atomic_project_creation.sql`
+- **Detail**: Znalezione dopiero po wykonaniu migracji na prawdziwej instancji,
+  czego odtworzona lokalnie warstwa Supabase nie pokazała. Po samym `revoke …
+  from public` `proacl` wynosił
+  `{postgres=X, anon=X, authenticated=X, service_role=X}` — PUBLIC znikło, ale
+  `anon` **zostało**, bo Supabase ma dla schematu `public` ustawione
+  `alter default privileges` nadające EXECUTE rolom `anon`, `authenticated` i
+  `service_role`. Czyli klucz publikowalny bez zalogowania nadal mógł wywołać
+  funkcję. Zamykał ją wyłącznie strażnik na `auth.uid()` — poprawnie, ale to
+  dokładnie ta sama iluzja zawężenia, którą miało naprawić F4.
+- **Fix**: drugi `revoke execute … from anon;`. Po wykonaniu `proacl` to
+  `{postgres=X, authenticated=X, service_role=X}` — potwierdzone na instancji.
+- **Decision**: FIXED — wykonane na bazie i zapisane w migracji
+
+### Lekcja
+
+Odtworzenie środowiska lokalnie wyłapało trzy realne defekty, których nie
+widać z lektury — ale nie wyłapało czwartego, bo nie odtworzyło domyślnych
+uprawnień, które Supabase ustawia poza `0001`. Emulacja jest dobra do sprawdzania
+logiki, nie do sprawdzania konfiguracji dostawcy. Ta druga wymaga prawdziwej
+instancji.

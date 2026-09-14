@@ -167,7 +167,7 @@ Wycofanie to `drop function`. Bezpieczna do wykonania na żywej bazie.
 
 #### Manual
 
-- [ ] 1.2 Wykonaj migrację w edytorze SQL Supabase i potwierdź obecność funkcji
+- [x] 1.2 Wykonaj migrację w edytorze SQL Supabase i potwierdź obecność funkcji — wykonana 2026-09-14; `prosrc` zawiera join i oba prefiksy, `proacl` = {postgres, authenticated, service_role}
 
 ### Phase 2: Trasa API korzysta z RPC
 

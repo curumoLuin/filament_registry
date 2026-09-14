@@ -87,8 +87,11 @@ begin
 end;
 $$;
 
--- create function nadaje EXECUTE roli PUBLIC automatycznie, więc sam grant
--- niczego nie zawęża — anon też mógłby wywołać tę funkcję. Odbieramy PUBLIC
--- i nadajemy jawnie. Strażnik na auth.uid() zostaje jako druga linia obrony.
+-- create function nadaje EXECUTE roli PUBLIC automatycznie, a Supabase dokłada
+-- do tego domyślne uprawnienia dla anon, authenticated i service_role. Sam
+-- grant niczego więc nie zawęża — bez tych dwóch revoke funkcję mógłby wywołać
+-- ktoś niezalogowany. Strażnik na auth.uid() zostaje jako druga linia obrony,
+-- ale odmowa ma padać na poziomie uprawnień, zanim ciało funkcji ruszy.
 revoke execute on function public.create_project_with_lines(text, text, jsonb) from public;
+revoke execute on function public.create_project_with_lines(text, text, jsonb) from anon;
 grant execute on function public.create_project_with_lines(text, text, jsonb) to authenticated;
