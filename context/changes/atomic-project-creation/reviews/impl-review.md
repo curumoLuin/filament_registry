@@ -243,3 +243,19 @@ widać z lektury — ale nie wyłapało czwartego, bo nie odtworzyło domyślnyc
 uprawnień, które Supabase ustawia poza `0001`. Emulacja jest dobra do sprawdzania
 logiki, nie do sprawdzania konfiguracji dostawcy. Ta druga wymaga prawdziwej
 instancji.
+
+## Weryfikacja na instancji docelowej (2026-09-14)
+
+Migracja wykonana w edytorze SQL Supabase. Funkcja sprawdzona pod rolą
+`authenticated` z ustawionym `request.jwt.claims`, w bloku zakończonym
+`raise exception`, więc wszystko zostało wycofane — po weryfikacji w bazie
+zero projektów testowych i zero projektów bez pozycji.
+
+| Sprawdzenie | Wynik |
+| --- | --- |
+| Utworzenie projektu z jedną pozycją | projekt + 1 pozycja |
+| Szpula spoza magazynu użytkownika | `LINES_NOT_IN_INVENTORY: 1 of 1` |
+| Literówka w nazwie klucza `filament_id` | `LINES_NOT_IN_INVENTORY: 1 of 1` |
+| Pusta lista pozycji | `NO_LINES` |
+| `prosrc` | zawiera join po `filaments` i oba prefiksy |
+| `proacl` | `{postgres=X, authenticated=X, service_role=X}` |
