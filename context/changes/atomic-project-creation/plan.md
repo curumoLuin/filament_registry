@@ -174,7 +174,7 @@ Wycofanie to `drop function`. Bezpieczna do wykonania na żywej bazie.
 #### Automated
 
 - [x] 2.1 Zamień dwa zapytania na wywołanie RPC i usuń kompensację — 2c8a904
-- [x] 2.2 Uruchom npm test i npm run build — 40/40, build ✓
+- [x] 2.2 Uruchom npm test i npm run build — 46/46, build ✓ (40 przed przeglądem, +6 po F8)
 
 #### Manual
 
