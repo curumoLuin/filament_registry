@@ -259,3 +259,8 @@ zero projektów testowych i zero projektów bez pozycji.
 | Pusta lista pozycji | `NO_LINES` |
 | `prosrc` | zawiera join po `filaments` i oba prefiksy |
 | `proacl` | `{postgres=X, authenticated=X, service_role=X}` |
+
+Po stronie aplikacji: `npm test` 46/46, `npm run build` przechodzi,
+`npm run test:e2e` 3/3 — w tym pełny ośmiokrokowy przepływ pierwszej sesji,
+który tworzy projekt, czyli przechodzi przez nową funkcję. To jest dowód, że
+zmiana działa w złożeniu, a nie tylko w izolacji.
