@@ -178,7 +178,7 @@ Wycofanie to `drop function`. Bezpieczna do wykonania na żywej bazie.
 
 #### Manual
 
-- [ ] 2.3 Utwórz projekt przez UI i potwierdź brak regresji
+- [x] 2.3 Utwórz projekt przez UI i potwierdź brak regresji — projekt dwufilamentowy utworzony, 45,5 g zachowane, wykrywanie konfliktu parametrów działa, dostępność szpul bez zmian (szkic nie rezerwuje)
 
 ### Phase 3: Rejestr ryzyk i dokumentacja
 

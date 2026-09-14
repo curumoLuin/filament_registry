@@ -23,8 +23,6 @@ Powiązane: FR-009, FR-013, FR-014 w `context/foundation/prd.md`.
 Przegląd implementacji wykonany — raport w `reviews/impl-review.md`. Siedem
 znalezisk naprawionych w tej gałęzi, dwa świadomie odłożone.
 
-Wszystkie kroki automatyczne wykonane. Pozostają dwa kroki ręczne po stronie
-właściciela projektu: wykonanie migracji `0002` w edytorze SQL Supabase (1.2)
-i potwierdzenie przez interfejs, że tworzenie projektu działa bez regresji
-(2.3). Do czasu wykonania 1.2 trasa `POST /api/projects` woła funkcję, której
-w bazie jeszcze nie ma.
+Wszystkie kroki wykonane — automatyczne i ręczne. Migracja `0002` wykonana na
+instancji docelowej i zweryfikowana pod rolą `authenticated` (1.2), projekt
+dwufilamentowy utworzony przez interfejs bez regresji (2.3).
