@@ -75,8 +75,9 @@ który `humanise()` już dziś potrafi zamienić na komunikat po polsku.
 
 - Kroki 1.2 i 2.3 są ręczne: migracji nie da się wykonać z tego środowiska,
   bo nie sięga ono `*.supabase.co`. Bez nich faza 2 nie ma czego wywołać.
-- Zakładamy, że `jsonb_to_recordset` z jawnym `as (filament_id uuid,
-  usage_g numeric)` wystarczy — nazwy kluczy muszą się zgadzać co do znaku.
+- `jsonb_to_recordset` daje NULL dla klucza, którego nie ma w obiekcie, więc
+  nazwy w `p_lines` (`filament_id`, `filament_name_snapshot`,
+  `estimated_usage_g`) muszą zgadzać się co do znaku z listą kolumn funkcji.
 - Migracja `0002` zakłada, że `0001` została wykonana na tej instancji.
 
 ## Kryteria sukcesu
