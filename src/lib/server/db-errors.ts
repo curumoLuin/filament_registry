@@ -14,6 +14,14 @@ export function humanise(message: string): string {
   if (message.includes('FILAMENT_MISSING')) {
     return message.replace(/^.*FILAMENT_MISSING:\s*/, 'Filament no longer in inventory: ');
   }
+  if (message.includes('LINES_NOT_IN_INVENTORY')) {
+    const counts = /LINES_NOT_IN_INVENTORY:\s*(\d+) of (\d+)/.exec(message);
+    if (!counts) return 'Some of the selected filaments are not in your inventory.';
+    const [, missing, total] = counts;
+    return missing === '1'
+      ? `One of the ${total} selected filaments is not in your inventory.`
+      : `${missing} of the ${total} selected filaments are not in your inventory.`;
+  }
   if (message.includes('NO_LINES')) {
     return 'This project has no filament lines.';
   }

@@ -43,7 +43,7 @@ kompensacji.
 Nowa migracja `0002_atomic_project_creation.sql` z funkcją
 `create_project_with_lines(p_name, p_description, p_lines jsonb)`. Pozycje
 przekazywane jako `jsonb`, bo liczba pozycji jest zmienna. Funkcja wstawia
-projekt, rozwija tablicę pozycji i zwraca wiersz `projects`.
+projekt, rozwija tablicę pozycji i zwraca `uuid` nowego projektu.
 
 Trasa API zamienia dwa zapytania na jedno `supabase.rpc(...)` i traci blok
 kompensacji.

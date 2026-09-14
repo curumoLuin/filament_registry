@@ -53,26 +53,42 @@ begin
   )
   select
     v_project_id,
-    line.filament_id,
+    f.id,
     line.filament_name_snapshot,
     line.estimated_usage_g
   from jsonb_to_recordset(p_lines) as line(
     filament_id            uuid,
     filament_name_snapshot text,
     estimated_usage_g      numeric(10, 3)
-  );
+  )
+  -- Join, a nie zapis wprost z line.filament_id. Klucz obcy do filaments
+  -- egzekwuje systemowy trigger referencyjny, który jest zwolniony z RLS —
+  -- czyli sam klucz obcy przepuściłby szpulę należącą do kogoś innego.
+  -- Join czyta filaments jako zalogowany użytkownik, więc cudzy wiersz po
+  -- prostu nie istnieje i pozycja wypada z wyniku.
+  join public.filaments f on f.id = line.filament_id;
 
   get diagnostics v_count = row_count;
 
-  -- jsonb_to_recordset po cichu daje NULL dla brakującego klucza, więc wiersz
-  -- o złym kształcie wpadłby w check-i tabeli. Ta kontrola łapie przypadek,
-  -- w którym tablica była niepusta, ale nie przełożyła się na żadną pozycję.
-  if v_count = 0 then
-    raise exception 'NO_LINES' using errcode = '23514';
+  -- Wypadnięta pozycja to albo cudza szpula, albo literówka w nazwie klucza
+  -- (jsonb_to_recordset daje wtedy NULL, a filament_id jest nullowalny z
+  -- rozmysłem — FR-008 — więc nic by nie krzyknęło). Obie drogi prowadzą do
+  -- projektu, którego nigdy nie da się wydrukować. Lepiej odmówić teraz.
+  if v_count <> jsonb_array_length(p_lines) then
+    -- Osobny prefiks, a nie FILAMENT_MISSING: tamten niesie nazwę szpuli i
+    -- humanise() dokleja do niego zdanie zbudowane pod nazwę. Ten niesie
+    -- liczbę, więc potrzebuje własnej gałęzi po stronie aplikacji.
+    raise exception 'LINES_NOT_IN_INVENTORY: % of %',
+      jsonb_array_length(p_lines) - v_count, jsonb_array_length(p_lines)
+      using errcode = '23503';
   end if;
 
   return v_project_id;
 end;
 $$;
 
+-- create function nadaje EXECUTE roli PUBLIC automatycznie, więc sam grant
+-- niczego nie zawęża — anon też mógłby wywołać tę funkcję. Odbieramy PUBLIC
+-- i nadajemy jawnie. Strażnik na auth.uid() zostaje jako druga linia obrony.
+revoke execute on function public.create_project_with_lines(text, text, jsonb) from public;
 grant execute on function public.create_project_with_lines(text, text, jsonb) to authenticated;

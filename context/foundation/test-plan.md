@@ -50,7 +50,8 @@ wygodowe są świadomie poza zakresem pokrycia automatycznego w MVP.
 | R-07 | Polityki row-level security w Postgresie zawężone do `auth.uid()` | `supabase/migrations/0001_init.sql` | polityka bazy |
 | R-08 | `redirects an anonymous visitor to the login page`, pełny 8-krokowy przepływ pierwszej sesji | `tests/e2e/first-session.spec.ts` | end-to-end |
 | R-09 | `odrzuca adres protokołowo-względny`, `odrzuca wariant z odwrotnym ukośnikiem`, `odrzuca znaki sterujące…` | `tests/unit/safe-redirect.test.ts` | jednostkowy |
-| R-10 | `create_project_with_lines` — jedna transakcja na projekt i wszystkie jego pozycje | `supabase/migrations/0002_atomic_project_creation.sql` | polityka bazy |
+| R-10 | `create_project_with_lines` — jedna transakcja na projekt i wszystkie jego pozycje; insert przez `join public.filaments`, bo klucz obcy jest zwolniony z RLS | `supabase/migrations/0002_atomic_project_creation.sql` | polityka bazy |
+| R-10 | `odmienia komunikat o pozycjach spoza magazynu przez liczbe`, `oddaje nieznany komunikat bez zmian` | `tests/unit/db-errors.test.ts` | jednostkowy |
 
 ## Poziomy testów i uzasadnienie
 
