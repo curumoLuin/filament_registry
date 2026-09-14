@@ -173,8 +173,8 @@ Wycofanie to `drop function`. Bezpieczna do wykonania na żywej bazie.
 
 #### Automated
 
-- [ ] 2.1 Zamień dwa zapytania na wywołanie RPC i usuń kompensację
-- [ ] 2.2 Uruchom npm test i npm run build
+- [x] 2.1 Zamień dwa zapytania na wywołanie RPC i usuń kompensację — 2c8a904
+- [x] 2.2 Uruchom npm test i npm run build — 40/40, build ✓
 
 #### Manual
 
@@ -184,5 +184,5 @@ Wycofanie to `drop function`. Bezpieczna do wykonania na żywej bazie.
 
 #### Automated
 
-- [ ] 3.1 Dopisz R-10 do rejestru ryzyk i mapy pokrycia
-- [ ] 3.2 Dopisz create_project_with_lines do powierzchni kontraktowych
+- [x] 3.1 Dopisz R-10 do rejestru ryzyk i mapy pokrycia — c819d8c
+- [x] 3.2 Dopisz create_project_with_lines do powierzchni kontraktowych — c819d8c
