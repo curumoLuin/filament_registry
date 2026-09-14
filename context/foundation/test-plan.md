@@ -34,6 +34,7 @@ wygodowe są świadomie poza zakresem pokrycia automatycznego w MVP.
 | R-06 | Sprzeczne parametry w projekcie wielofilamentowym są prezentowane tak, jakby były zgodne | PRD FR-015 (bloki per filament, ostrzeżenie o konflikcie) | Użytkownik wybiera jedną temperaturę do wydruku z dwóch materiałów i go psuje. | Średnie | Średni | **P2** |
 | R-07 | Użytkownik może odczytać albo zmienić filamenty i projekty innego konta | Sekcja kontroli dostępu: jeden właściciel, wszystkie dane należą do tego konta | Wyciek danych między kontami. | Niskie | Wysoki | **P1** |
 | R-08 | Sesja zostaje utracona albo nieuwierzytelnione żądania docierają do tras z danymi | PRD FR-001; pytanie o nadużycie — co się stanie, jeśli nikt się nie zaloguje? | Anonimowy dostęp do rejestru. | Niskie | Wysoki | **P1** |
+| R-09 | Parametr `redirectTo` na ekranie logowania wyprowadza użytkownika na obcą domenę po udanym uwierzytelnieniu | Przegląd implementacji (`/10x-impl-review`, wymiar Safety & Quality) | Ofiara ląduje na stronie atakującego dokładnie w chwili, w której właśnie zaufała ekranowi logowania — to najlepszy możliwy moment na phishing. Sprawdzenie `startsWith('/')` przepuszcza `//evil.example`, bo przeglądarka czyta to jako adres protokołowo-względny. | Niskie | Wysoki | **P1** |
 
 ## Mapa pokrycia
 
@@ -47,6 +48,7 @@ wygodowe są świadomie poza zakresem pokrycia automatycznego w MVP.
 | R-06 | `flags parameters that disagree across filaments` | `tests/unit/parameters.test.ts` | jednostkowy |
 | R-07 | Polityki row-level security w Postgresie zawężone do `auth.uid()` | `supabase/migrations/0001_init.sql` | polityka bazy |
 | R-08 | `redirects an anonymous visitor to the login page`, pełny 8-krokowy przepływ pierwszej sesji | `tests/e2e/first-session.spec.ts` | end-to-end |
+| R-09 | `odrzuca adres protokołowo-względny`, `odrzuca wariant z odwrotnym ukośnikiem`, `odrzuca znaki sterujące…` | `tests/unit/safe-redirect.test.ts` | jednostkowy |
 
 ## Poziomy testów i uzasadnienie
 

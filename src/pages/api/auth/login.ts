@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { safeRedirectPath } from '../../../lib/safe-redirect';
 
 export const prerender = false;
 
@@ -18,5 +19,5 @@ export const POST: APIRoute = async ({ request, locals, redirect }) => {
     return redirect(`/login?error=${encodeURIComponent('Invalid email or password.')}`);
   }
 
-  return redirect(redirectTo.startsWith('/') ? redirectTo : '/filaments');
+  return redirect(safeRedirectPath(redirectTo));
 };
